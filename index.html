@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <title>appointmentapp</title>
+    <style>
+        form { text-align: center; }
+        form, h2, ul, li { text-align: center; }
+    </style>
+</head>
+<body style="background-color: greenyellow;">
+    
+    <form style="background-color: rgba(42, 151, 165, 0.315);" onsubmit="saveToServer(event)">
+        <h1 style="background-color: yellow;">user details</h1>
+        <div> 
+            <label>fullname</label>
+        </div>
+        <div>
+            <input type="text" id="name" name="username" style="background-color: pink;" required>
+        </div>
+        <div>
+            <label>email id</label>
+        </div>
+        <div>
+            <input type="email" style="background-color: pink;" name="email" required>
+        </div>
+        <div>
+            <label>phone number</label>
+        </div>
+        <div>
+            <input type="number" name="number" style="background-color: pink;" required>
+        </div>
+        <br>
+        <input type="submit" style="background-color: blue">
+    </form>
+    
+    <section id="userData" style="background-color: rgba(42, 151, 165, 0.315);">
+        <h2>User Data</h2>
+        <ul id="userList"></ul>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.4/axios.min.js"></script>
+    <script>
+        function saveToServer(event) {
+            event.preventDefault();
+            const name = event.target.username.value;
+            const email = event.target.email.value;
+            const number = event.target.number.value;
+
+            const user = {
+                name: name,
+                email: email,
+                number: number
+            };
+
+            axios.post("https://crudcrud.com/api/76d096db1d804a3abb549a93d2f8d974/appointmentData", user)
+                .then((response) => {
+                    console.log(response);
+                    event.target.username.value = "";
+                    event.target.email.value = "";
+                    event.target.number.value = "";
+                    loadUserDataFromServer(); // Reload user data after adding
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
+        }
+
+        function loadUserDataFromServer() {
+            axios.get("https://crudcrud.com/api/76d096db1d804a3abb549a93d2f8d974/appointmentData")
+                .then((response) => {
+                    const userList = document.getElementById("userList");
+                    userList.innerHTML = "";
+
+                    response.data.forEach((user, index) => {
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `Name: ${user.name}, Email: ${user.email}, Number: ${user.number}`;
+
+                        const editButton = document.createElement("button");
+                        editButton.textContent = "Edit";
+                        editButton.onclick = () => editUser(index, user);
+
+                        const deleteButton = document.createElement("button");
+                        deleteButton.textContent = "Delete";
+                        deleteButton.onclick = () => deleteUser(user._id);
+
+                        listItem.appendChild(editButton);
+                        listItem.appendChild(deleteButton);
+
+                        userList.appendChild(listItem);
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
+
+        function editUser(index, user) {
+            const newName = prompt("Edit name:", user.name);
+            const newEmail = prompt("Edit email:", user.email);
+            const newNumber = prompt("Edit phone number:", user.number);
+
+            if (newName || newEmail || newNumber) {
+                const updatedUser = {
+                    name: newName || user.name,
+                    email: newEmail || user.email,
+                    number: newNumber || user.number,
+                };
+
+                axios.put(`https://crudcrud.com/api/76d096db1d804a3abb549a93d2f8d974/appointmentData/${user._id}`, updatedUser)
+                    .then(() => {
+                        loadUserDataFromServer(); // Reload user data after editing
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+            }
+        }
+
+        function deleteUser(userId) {
+            if (confirm("Are you sure you want to delete this user?")) {
+                axios.delete(`https://crudcrud.com/api/76d096db1d804a3abb549a93d2f8d974/appointmentData/${userId}`)
+                    .then(() => {
+                        loadUserDataFromServer(); // Reload user data after deleting
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+            }
+        }
+
+        window.onload = loadUserDataFromServer;
+    </script>
+</body>
+</html>
